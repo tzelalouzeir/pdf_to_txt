@@ -1,28 +1,33 @@
-# Import the required libraries
-from io import StringIO
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
-from pdfminer.pdfdocument import PDFDocument
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
+from io import StringIO
 
-# Set up the PDFMiner objects
-rsrcmgr = PDFResourceManager()
-sio = StringIO()
-laparams = LAParams()
-device = TextConverter(rsrcmgr, sio, codec='utf-8', laparams=laparams)
-interpreter = PDFPageInterpreter(rsrcmgr, device)
+def convert_pdf_to_txt(path):
+    rsrcmgr = PDFResourceManager()
+    retstr = StringIO()
+    codec = 'utf-8'
+    laparams = LAParams()
+    device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
+    fp = open(path, 'rb')
+    interpreter = PDFPageInterpreter(rsrcmgr, device)
+    password = ""
+    maxpages = 0
+    caching = True
+    pagenos=set()
 
-# Open the PDF file and extract its text
-with open('document.pdf', 'rb') as fp:
-    for page in PDFPage.get_pages(fp):
+    for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages, password=password,caching=caching, check_extractable=True):
         interpreter.process_page(page)
 
-# Close the PDFMiner objects and get the text from the StringIO object
-device.close()
-pdf_text = sio.getvalue()
-sio.close()
+    text = retstr.getvalue()
 
-# Save the extracted text to a Word document
-with open('document.docx', 'w') as fp:
-    fp.write(pdf_text)
+    fp.close()
+    device.close()
+    retstr.close()
+    return text
+
+text = convert_pdf_to_txt('document.pdf')
+
+with open('output.txt', 'w', encoding='utf-8') as f:
+    f.write(text)
