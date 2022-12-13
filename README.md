@@ -2,36 +2,41 @@
 Python data mining solution converts PDFs to editable Word files for easy analysis. Extract valuable insights from your data quickly and easily.
 
 
-download pdfminer as ```pip install pdfminer```
-you need to change ```document.pdf``` as you wish
+download pdfminer as ```pip install pdfminer.six```
 
 
+# Code
 
-    # Import the required libraries
-    from io import StringIO
+    from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
     from pdfminer.converter import TextConverter
     from pdfminer.layout import LAParams
-    from pdfminer.pdfdocument import PDFDocument
-    from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
     from pdfminer.pdfpage import PDFPage
-    
-    # Set up the PDFMiner objects
-    rsrcmgr = PDFResourceManager()
-    sio = StringIO()
-    laparams = LAParams()
-    device = TextConverter(rsrcmgr, sio, codec='utf-8', laparams=laparams)
-    interpreter = PDFPageInterpreter(rsrcmgr, device)
-    
-    # Open the PDF file and extract its text
-    with open('document.pdf', 'rb') as fp:
-        for page in PDFPage.get_pages(fp):
+    from io import StringIO
+
+    def convert_pdf_to_txt(path):
+        rsrcmgr = PDFResourceManager()
+        retstr = StringIO()
+        codec = 'utf-8'
+        laparams = LAParams()
+        device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
+        fp = open(path, 'rb')
+        interpreter = PDFPageInterpreter(rsrcmgr, device)
+        password = ""
+        maxpages = 0
+        caching = True
+        pagenos=set()
+
+        for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages, password=password,caching=caching, check_extractable=True):
             interpreter.process_page(page)
-    
-    # Close the PDFMiner objects and get the text from the StringIO object
-    device.close()
-    pdf_text = sio.getvalue()
-    sio.close()
-    
-    # Save the extracted text to a Word document
-    with open('document.docx', 'w') as fp:
-        fp.write(pdf_text)
+
+        text = retstr.getvalue()
+
+        fp.close()
+        device.close()
+        retstr.close()
+        return text
+
+# Save as .txt
+    text = convert_pdf_to_txt('document.pdf')
+    with open('output.txt', 'w', encoding='utf-8') as f:
+        f.write(text)
